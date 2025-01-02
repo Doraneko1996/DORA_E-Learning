@@ -13,14 +13,14 @@ import ThemeToggle from '@/components/ThemeToggle.vue';
         <!-- Main Content -->
         <main class="flex-1 flex flex-col min-h-screen">
             <!-- Header với theme toggle -->
-            <div class="sticky top-0 z-40 bg-surface-0 dark:bg-surface-900">
+            <div class="sticky top-0 z-40 bg-transparent">
                 <div class="flex justify-end p-3">
                     <ThemeToggle />
                 </div>
             </div>
 
             <!-- Page Content -->
-            <div class="flex-1 p-4">
+            <div class="flex-1 p-3">
                 <slot />
             </div>
         </main>
