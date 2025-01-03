@@ -39,15 +39,7 @@ const toggleMenu = (event: Event) => {
 </script>
 
 <template>
-    <div class="relative">
-        <Button 
-            class="bg-surface-0 dark:bg-surface-900"
-            @click="toggleMenu" 
-            :icon="themeStore.isDark ? 'pi pi-moon' : 'pi pi-sun'" 
-            variant="text" 
-            rounded 
-            raised
-            aria-label="Theme" />
-        <Menu ref="menu" :model="items" :popup="true" />
-    </div>
+    <Button class="bg-surface-0 dark:bg-surface-900" @click="toggleMenu"
+        :icon="themeStore.isDark ? 'pi pi-moon' : 'pi pi-sun'" variant="text" raised aria-label="Theme" />
+    <Menu ref="menu" :model="items" :popup="true" />
 </template>
