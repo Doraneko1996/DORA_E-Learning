@@ -1,23 +1,30 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useField, useForm } from 'vee-validate';
-import { toTypedSchema } from '@vee-validate/zod';
-import * as zod from 'zod';
+import { useField, useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import * as zod from 'zod'
 import ThemeToggle from '@/components/ThemeToggle.vue'
-import axios from 'axios'
+import { AuthService } from '@/services/auth.service'
+import { setUserSession } from '@/utils/storage.utils'
+import { getErrorMessage } from '@/utils/error.utils'
 import { useRouter } from 'vue-router'
 import { useSnackbarStore } from '@/stores/snackbar'
+import { useDayjs } from '@/composables/useDayjs'
 
-//===== XỬ LÝ ĐĂNG NHẬP =====//
+// Stores và router
 const snackbar = useSnackbarStore()
-// Khai báo trạng thái loading và visible
+const router = useRouter()
+const { formatDateTime } = useDayjs()
+
+// State
 const loading = ref(false)
 const visible = ref(false)
 
+//===== XỬ LÝ ĐĂNG NHẬP =====//
 // Định nghĩa schema xác thực
 const validationSchema = toTypedSchema(
   zod.object({
-    user_name: zod.string({ required_error: "Hãy nhập tên tài khoản" }).min(1, { message: 'Hãy nhập tên tài khoản' }).min(4, { message: 'Tên tài khoản phải hơn 4 kí tự' }),
+    userName: zod.string({ required_error: "Hãy nhập tên tài khoản" }).min(1, { message: 'Hãy nhập tên tài khoản' }).min(4, { message: 'Tên tài khoản phải hơn 4 kí tự' }),
     password: zod.string({ required_error: "Hãy nhập mật khẩu" }).min(1, { message: 'Hãy nhập mật khẩu' }).min(6, { message: 'Mật khẩu phải hơn 6 kí tự' }),
   })
 );
@@ -25,46 +32,42 @@ const validationSchema = toTypedSchema(
 // Sử dụng useForm để quản lý form
 const { handleSubmit } = useForm({
   validationSchema,
-});
+})
 
-const user_name = useField('user_name')
+const userName = useField('userName')
 const password = useField('password')
 
-const router = useRouter()
-
 const onSubmit = handleSubmit(async (values) => {
-  loading.value = true; // Bắt đầu trạng thái loading
+  loading.value = true
   try {
-    const response = await axios.post('/api/auth/login', values)
-    const name = `${response.data.user.first_name} ${response.data.user.last_name}`
-
-    // Lưu dữ liệu người dùng vào sessionStorage
-    sessionStorage.setItem('user', response.data.user)
-    sessionStorage.setItem('access_token', response.data.access_token)
-    // sessionStorage.setItem('refresh_token', response.data.refresh_token)
-
-    // Tính toán thời gian hết hạn (100 phút)
+    const response = await AuthService.login({
+      userName: values.userName,
+      password: values.password
+    });
     const sessionTime = import.meta.env.VITE_SESSION_TIME
-    const expiresIn = parseInt(sessionTime) * 60 * 1000; // Chuyển đổi 100 phút thành mili giây
-    const expirationTime = Date.now() + expiresIn;
-    sessionStorage.setItem('token_expiration', expirationTime.toString());
+    const expiresIn = parseInt(sessionTime) * 60 * 1000
+    const expirationTime = Date.now() + expiresIn
 
-    // Hiển thị thông báo thành công
-    snackbar.showSnackbar(response.data.message, `Xin chào ${name}, thời gian sử dụng là ${sessionTime} phút, hết hạn lúc: ${new Date(expirationTime).toLocaleString()}`, 'success', 6000)
+    setUserSession(response.data.user, response.data.access_token, expirationTime)
 
-    // Chuyển hướng đến dashboard
+    snackbar.showSnackbar(
+      response.message,
+      `Xin chào ${response.data.user.firstName} ${response.data.user.lastName}, thời gian sử dụng: ${sessionTime} phút, hết hạn vào: ${formatDateTime(new Date(expirationTime))}`,
+      'success',
+      6000
+    );
+
     router.push('/dashboard')
-
   } catch (error) {
-    const axiosError = error as { response?: { data?: { message?: string } } }; // Định nghĩa kiểu cho error
-
-    // Hiển thị thông báo lỗi
-    snackbar.showSnackbar('Đăng nhập thất bại', axiosError.response?.data?.message || 'Lỗi không xác định', 'error')
-
+    snackbar.showSnackbar(
+      'Đăng nhập thất bại',
+      getErrorMessage(error, 'Lỗi không xác định'),
+      'error'
+    );
   } finally {
-    loading.value = false; // Kết thúc trạng thái loading
+    loading.value = false
   }
-});
+})
 //===========================//
 </script>
 
@@ -92,7 +95,7 @@ const onSubmit = handleSubmit(async (values) => {
       <v-card-text class="py-2">
         <form @submit="onSubmit" class="d-flex flex-column ga-3">
           <v-text-field label=" Tên tài khoản" variant="outlined" hint="Tên tài khoản của bạn"
-            v-model="user_name.value.value" :error-messages="user_name.errorMessage.value" />
+            v-model="userName.value.value" :error-messages="userName.errorMessage.value" />
 
           <v-text-field :append-inner-icon="visible ? 'mdi-eye' : 'mdi-eye-off'"
             @click:append-inner="visible = !visible" :type="visible ? 'text' : 'password'" label="Mật khẩu"

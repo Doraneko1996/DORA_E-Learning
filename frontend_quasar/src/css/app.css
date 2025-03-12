@@ -1,0 +1,514 @@
+/* app global css */
+@font-face {
+  font-family: open-sans;
+  src: url(./fonts/OpenSans.woff2) format('woff2');
+}
+
+* {
+  font-family: 'open-sans';
+}
+
+::-webkit-scrollbar {
+  height: var(--scrollbar-width-height);
+  width: var(--scrollbar-width-height);
+  background: transparent;
+  overflow: visible;
+}
+
+::-webkit-scrollbar-thumb {
+  width: var(--scrollbar-thumb-width);
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 10px;
+  border: 4px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-bg-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.q-notification {
+  font-size: 1.2em;
+}
+
+.q-inner-loading {
+  backdrop-filter: blur(5px);
+}
+
+.q-inner-loading--dark {
+  backdrop-filter: blur(5px);
+}
+
+.q-dialog__backdrop {
+  backdrop-filter: blur(5px);
+}
+
+:root {
+  --scrollbar-width-height: 10px;
+  --scrollbar-thumb-width: 10px;
+  --scrollbar-thumb-bg: var(--q-grey-5);
+  --scrollbar-thumb-bg-hover: var(--q-grey-4);
+
+  --q-dark-page: #1f2937;
+  /* Tailwind gray-800 */
+
+  /* Gray (xám) */
+  --q-grey-0: #f9fafb;
+  /* gray-50 */
+  --q-grey-1: #f3f4f6;
+  /* gray-100 */
+  --q-grey-2: #e5e7eb;
+  /* gray-200 */
+  --q-grey-3: #d1d5db;
+  /* gray-300 */
+  --q-grey-4: #9ca3af;
+  /* gray-400 */
+  --q-grey-5: #6b7280;
+  /* gray-500 */
+  --q-grey-6: #4b5563;
+  /* gray-600 */
+  --q-grey-7: #374151;
+  /* gray-700 */
+  --q-grey-8: #1f2937;
+  /* gray-800 */
+  --q-grey-9: #111827;
+  /* gray-900 */
+  --q-grey-10: #030712;
+  /* gray-950 */
+
+  /* Red (đỏ) */
+  --q-red-0: #fff1f2;
+  /* red-50 */
+  --q-red-1: #ffe4e6;
+  /* red-100 */
+  --q-red-2: #fecdd3;
+  /* red-200 */
+  --q-red-3: #fda4af;
+  /* red-300 */
+  --q-red-4: #fb7185;
+  /* red-400 */
+  --q-red-5: #f43f5e;
+  /* red-500 */
+  --q-red-6: #e11d48;
+  /* red-600 */
+  --q-red-7: #be123c;
+  /* red-700 */
+  --q-red-8: #9f1239;
+  /* red-800 */
+  --q-red-9: #881337;
+  /* red-900 */
+  --q-red-10: #450a0a;
+  /* red-950 */
+
+  /* Orange (cam) */
+  --q-orange-0: #fff7ed;
+  /* orange-50 */
+  --q-orange-1: #ffedd5;
+  /* orange-100 */
+  --q-orange-2: #fed7aa;
+  /* orange-200 */
+  --q-orange-3: #fdba74;
+  /* orange-300 */
+  --q-orange-4: #fb923c;
+  /* orange-400 */
+  --q-orange-5: #f97316;
+  /* orange-500 */
+  --q-orange-6: #ea580c;
+  /* orange-600 */
+  --q-orange-7: #c2410c;
+  /* orange-700 */
+  --q-orange-8: #9a3412;
+  /* orange-800 */
+  --q-orange-9: #7c2d12;
+  /* orange-900 */
+  --q-orange-10: #431407;
+  /* orange-950 */
+
+  /* Yellow (vàng) */
+  --q-yellow-0: #fefce8;
+  /* yellow-50 */
+  --q-yellow-1: #fef9c3;
+  /* yellow-100 */
+  --q-yellow-2: #fef08a;
+  /* yellow-200 */
+  --q-yellow-3: #fde047;
+  /* yellow-300 */
+  --q-yellow-4: #facc15;
+  /* yellow-400 */
+  --q-yellow-5: #eab308;
+  /* yellow-500 */
+  --q-yellow-6: #ca8a04;
+  /* yellow-600 */
+  --q-yellow-7: #a16207;
+  /* yellow-700 */
+  --q-yellow-8: #854d0e;
+  /* yellow-800 */
+  --q-yellow-9: #713f12;
+  /* yellow-900 */
+  --q-yellow-10: #422006;
+  /* yellow-950 */
+
+  /* Green (xanh lá) */
+  --q-green-0: #f0fdf4;
+  /* green-50 */
+  --q-green-1: #dcfce7;
+  /* green-100 */
+  --q-green-2: #bbf7d0;
+  /* green-200 */
+  --q-green-3: #86efac;
+  /* green-300 */
+  --q-green-4: #4ade80;
+  /* green-400 */
+  --q-green-5: #22c55e;
+  /* green-500 */
+  --q-green-6: #16a34a;
+  /* green-600 */
+  --q-green-7: #15803d;
+  /* green-700 */
+  --q-green-8: #166534;
+  /* green-800 */
+  --q-green-9: #14532d;
+  /* green-900 */
+  --q-green-10: #052e16;
+  /* green-950 */
+
+  /* Teal (xanh ngọc) */
+  --q-teal-0: #f0fdfa;
+  /* teal-50 */
+  --q-teal-1: #ccfbf1;
+  /* teal-100 */
+  --q-teal-2: #99f6e4;
+  /* teal-200 */
+  --q-teal-3: #5eead4;
+  /* teal-300 */
+  --q-teal-4: #2dd4bf;
+  /* teal-400 */
+  --q-teal-5: #14b8a6;
+  /* teal-500 */
+  --q-teal-6: #0d9488;
+  /* teal-600 */
+  --q-teal-7: #0f766e;
+  /* teal-700 */
+  --q-teal-8: #115e59;
+  /* teal-800 */
+  --q-teal-9: #134e4a;
+  /* teal-900 */
+  --q-teal-10: #042f2e;
+  /* teal-950 */
+
+  /* Blue (xanh dương) */
+  --q-blue-0: #eff6ff;
+  /* blue-50 */
+  --q-blue-1: #dbeafe;
+  /* blue-100 */
+  --q-blue-2: #bfdbfe;
+  /* blue-200 */
+  --q-blue-3: #93c5fd;
+  /* blue-300 */
+  --q-blue-4: #60a5fa;
+  /* blue-400 */
+  --q-blue-5: #3b82f6;
+  /* blue-500 */
+  --q-blue-6: #2563eb;
+  /* blue-600 */
+  --q-blue-7: #1d4ed8;
+  /* blue-700 */
+  --q-blue-8: #1e40af;
+  /* blue-800 */
+  --q-blue-9: #1e3a8a;
+  /* blue-900 */
+  --q-blue-10: #172554;
+  /* blue-950 */
+
+  /* Indigo (chàm) */
+  --q-indigo-0: #eef2ff;
+  /* indigo-50 */
+  --q-indigo-1: #e0e7ff;
+  /* indigo-100 */
+  --q-indigo-2: #c7d2fe;
+  /* indigo-200 */
+  --q-indigo-3: #a5b4fc;
+  /* indigo-300 */
+  --q-indigo-4: #818cf8;
+  /* indigo-400 */
+  --q-indigo-5: #6366f1;
+  /* indigo-500 */
+  --q-indigo-6: #4f46e5;
+  /* indigo-600 */
+  --q-indigo-7: #4338ca;
+  /* indigo-700 */
+  --q-indigo-8: #3730a3;
+  /* indigo-800 */
+  --q-indigo-9: #312e81;
+  /* indigo-900 */
+  --q-indigo-10: #1e1b4b;
+  /* indigo-950 */
+
+  /* Purple (tím) */
+  --q-purple-0: #faf5ff;
+  /* purple-50 */
+  --q-purple-1: #f3e8ff;
+  /* purple-100 */
+  --q-purple-2: #e9d5ff;
+  /* purple-200 */
+  --q-purple-3: #d8b4fe;
+  /* purple-300 */
+  --q-purple-4: #c084fc;
+  /* purple-400 */
+  --q-purple-5: #a855f7;
+  /* purple-500 */
+  --q-purple-6: #9333ea;
+  /* purple-600 */
+  --q-purple-7: #7e22ce;
+  /* purple-700 */
+  --q-purple-8: #6b21a8;
+  /* purple-800 */
+  --q-purple-9: #581c87;
+  /* purple-900 */
+  --q-purple-10: #3b0764;
+  /* purple-950 */
+
+  /* Pink (hồng) */
+  --q-pink-0: #fdf2f8;
+  /* pink-50 */
+  --q-pink-1: #fce7f3;
+  /* pink-100 */
+  --q-pink-2: #fbcfe8;
+  /* pink-200 */
+  --q-pink-3: #f9a8d4;
+  /* pink-300 */
+  --q-pink-4: #f472b6;
+  /* pink-400 */
+  --q-pink-5: #ec4899;
+  /* pink-500 */
+  --q-pink-6: #db2777;
+  /* pink-600 */
+  --q-pink-7: #be185d;
+  /* pink-700 */
+  --q-pink-8: #9d174d;
+  /* pink-800 */
+  --q-pink-9: #831843;
+  /* pink-900 */
+  --q-pink-10: #500724;
+  /* pink-950 */
+
+  /* Slate (xám xanh) */
+  --q-slate-0: #f8fafc;
+  /* slate-50 */
+  --q-slate-1: #f1f5f9;
+  /* slate-100 */
+  --q-slate-2: #e2e8f0;
+  /* slate-200 */
+  --q-slate-3: #cbd5e1;
+  /* slate-300 */
+  --q-slate-4: #94a3b8;
+  /* slate-400 */
+  --q-slate-5: #64748b;
+  /* slate-500 */
+  --q-slate-6: #475569;
+  /* slate-600 */
+  --q-slate-7: #334155;
+  /* slate-700 */
+  --q-slate-8: #1e293b;
+  /* slate-800 */
+  --q-slate-9: #0f172a;
+  /* slate-900 */
+  --q-slate-10: #020617;
+  /* slate-950 */
+
+  /* Zinc (kẽm) */
+  --q-zinc-0: #fafafa;
+  /* zinc-50 */
+  --q-zinc-1: #f4f4f5;
+  /* zinc-100 */
+  --q-zinc-2: #e4e4e7;
+  /* zinc-200 */
+  --q-zinc-3: #d4d4d8;
+  /* zinc-300 */
+  --q-zinc-4: #a1a1aa;
+  /* zinc-400 */
+  --q-zinc-5: #71717a;
+  /* zinc-500 */
+  --q-zinc-6: #52525b;
+  /* zinc-600 */
+  --q-zinc-7: #3f3f46;
+  /* zinc-700 */
+  --q-zinc-8: #27272a;
+  /* zinc-800 */
+  --q-zinc-9: #18181b;
+  /* zinc-900 */
+  --q-zinc-10: #09090b;
+  /* zinc-950 */
+
+  /* Neutral (trung tính) */
+  --q-neutral-0: #fafafa;
+  /* neutral-50 */
+  --q-neutral-1: #f5f5f5;
+  /* neutral-100 */
+  --q-neutral-2: #e5e5e5;
+  /* neutral-200 */
+  --q-neutral-3: #d4d4d4;
+  /* neutral-300 */
+  --q-neutral-4: #a3a3a3;
+  /* neutral-400 */
+  --q-neutral-5: #737373;
+  /* neutral-500 */
+  --q-neutral-6: #525252;
+  /* neutral-600 */
+  --q-neutral-7: #404040;
+  /* neutral-700 */
+  --q-neutral-8: #262626;
+  /* neutral-800 */
+  --q-neutral-9: #171717;
+  /* neutral-900 */
+  --q-neutral-10: #0a0a0a;
+  /* neutral-950 */
+
+  /* Stone (đá) */
+  --q-stone-0: #fafaf9;
+  /* stone-50 */
+  --q-stone-1: #f5f5f4;
+  /* stone-100 */
+  --q-stone-2: #e7e5e4;
+  /* stone-200 */
+  --q-stone-3: #d6d3d1;
+  /* stone-300 */
+  --q-stone-4: #a8a29e;
+  /* stone-400 */
+  --q-stone-5: #78716c;
+  /* stone-500 */
+  --q-stone-6: #57534e;
+  /* stone-600 */
+  --q-stone-7: #44403c;
+  /* stone-700 */
+  --q-stone-8: #292524;
+  /* stone-800 */
+  --q-stone-9: #1c1917;
+  /* stone-900 */
+  --q-stone-10: #0c0a09;
+  /* stone-950 */
+
+  /* Amber (hổ phách) */
+  --q-amber-0: #fffbeb;
+  /* amber-50 */
+  --q-amber-1: #fef3c7;
+  /* amber-100 */
+  --q-amber-2: #fde68a;
+  /* amber-200 */
+  --q-amber-3: #fcd34d;
+  /* amber-300 */
+  --q-amber-4: #fbbf24;
+  /* amber-400 */
+  --q-amber-5: #f59e0b;
+  /* amber-500 */
+  --q-amber-6: #d97706;
+  /* amber-600 */
+  --q-amber-7: #b45309;
+  /* amber-700 */
+  --q-amber-8: #92400e;
+  /* amber-800 */
+  --q-amber-9: #78350f;
+  /* amber-900 */
+  --q-amber-10: #451a03;
+  /* amber-950 */
+
+  /* Lime (chanh) */
+  --q-lime-0: #f7fee7;
+  /* lime-50 */
+  --q-lime-1: #ecfccb;
+  /* lime-100 */
+  --q-lime-2: #d9f99d;
+  /* lime-200 */
+  --q-lime-3: #bef264;
+  /* lime-300 */
+  --q-lime-4: #a3e635;
+  /* lime-400 */
+  --q-lime-5: #84cc16;
+  /* lime-500 */
+  --q-lime-6: #65a30d;
+  /* lime-600 */
+  --q-lime-7: #4d7c0f;
+  /* lime-700 */
+  --q-lime-8: #3f6212;
+  /* lime-800 */
+  --q-lime-9: #365314;
+  /* lime-900 */
+  --q-lime-10: #1a2e05;
+  /* lime-950 */
+
+  /* Emerald (ngọc lục bảo) */
+  --q-emerald-0: #ecfdf5;
+  /* emerald-50 */
+  --q-emerald-1: #d1fae5;
+  /* emerald-100 */
+  --q-emerald-2: #a7f3d0;
+  /* emerald-200 */
+  --q-emerald-3: #6ee7b7;
+  /* emerald-300 */
+  --q-emerald-4: #34d399;
+  /* emerald-400 */
+  --q-emerald-5: #10b981;
+  /* emerald-500 */
+  --q-emerald-6: #059669;
+  /* emerald-600 */
+  --q-emerald-7: #047857;
+  /* emerald-700 */
+  --q-emerald-8: #065f46;
+  /* emerald-800 */
+  --q-emerald-9: #064e3b;
+  /* emerald-900 */
+  --q-emerald-10: #022c22;
+  /* emerald-950 */
+
+  /* Cyan (xanh lơ) */
+  --q-cyan-0: #ecfeff;
+  /* cyan-50 */
+  --q-cyan-1: #cffafe;
+  /* cyan-100 */
+  --q-cyan-2: #a5f3fc;
+  /* cyan-200 */
+  --q-cyan-3: #67e8f9;
+  /* cyan-300 */
+  --q-cyan-4: #22d3ee;
+  /* cyan-400 */
+  --q-cyan-5: #06b6d4;
+  /* cyan-500 */
+  --q-cyan-6: #0891b2;
+  /* cyan-600 */
+  --q-cyan-7: #0e7490;
+  /* cyan-700 */
+  --q-cyan-8: #155e75;
+  /* cyan-800 */
+  --q-cyan-9: #164e63;
+  /* cyan-900 */
+  --q-cyan-10: #083344;
+  /* cyan-950 */
+
+  /* Fuchsia (hồng tím) */
+  --q-fuchsia-0: #fdf4ff;
+  /* fuchsia-50 */
+  --q-fuchsia-1: #fae8ff;
+  /* fuchsia-100 */
+  --q-fuchsia-2: #f5d0fe;
+  /* fuchsia-200 */
+  --q-fuchsia-3: #f0abfc;
+  /* fuchsia-300 */
+  --q-fuchsia-4: #e879f9;
+  /* fuchsia-400 */
+  --q-fuchsia-5: #d946ef;
+  /* fuchsia-500 */
+  --q-fuchsia-6: #c026d3;
+  /* fuchsia-600 */
+  --q-fuchsia-7: #a21caf;
+  /* fuchsia-700 */
+  --q-fuchsia-8: #86198f;
+  /* fuchsia-800 */
+  --q-fuchsia-9: #701a75;
+  /* fuchsia-900 */
+  --q-fuchsia-10: #4a044e;
+  /* fuchsia-950 */
+}

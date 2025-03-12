@@ -12,6 +12,10 @@ export function useDayjs() {
       if (!date) return ''
       return dayjs(date).format('DD/MM/YYYY')
     },
+    formatDateInput: (date: string | Date | null) => {
+      if (!date) return ''
+      return dayjs(date).format('YYYY-MM-DD')
+    },
     formatTime: (date: string | Date | null) => {
       if (!date) return ''
       return dayjs(date).format('HH:mm:ss')

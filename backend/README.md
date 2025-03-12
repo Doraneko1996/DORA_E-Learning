@@ -71,3 +71,53 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+backend/
+├── src/
+│   ├── auth/                          # Module xác thực
+│   │   ├── decorators/                # Custom decorators
+│   │   ├── guards/                    # Authentication guards
+│   │   ├── strategies/                # Passport/JWT strategies
+│   │   ├── auth.controller.ts         # [Hiện có]
+│   │   ├── auth.module.ts
+│   │   └── auth.service.ts            # [Hiện có]
+│   │
+│   ├── users/                         # Module quản lý người dùng
+│   │   ├── dto/                       # Data Transfer Objects 
+│   │   │   └── admin.dto.ts           # [Hiện có]
+│   │   ├── entities/                  # Database entities
+│   │   │   └── user.entity.ts         # [Hiện có]
+│   │   ├── interfaces/                # Type definitions
+│   │   ├── users.controller.ts        # [Hiện có]
+│   │   ├── users.module.ts
+│   │   └── users.service.ts           # [Hiện có]
+│   │
+│   ├── common/                        # Shared resources
+│   │   ├── filters/                   # Exception filters
+│   │   │   └── http-exception.filter.ts # [Hiện có]
+│   │   ├── interceptors/              # Response interceptors
+│   │   ├── pipes/                     # Validation pipes
+│   │   └── decorators/                # Global decorators
+│   │
+│   ├── config/                        # Configuration
+│   │   ├── database.config.ts
+│   │   ├── swagger.config.ts
+│   │   └── env.ts
+│   │
+│   ├── core/                          # Business logic core
+│   │   ├── exceptions/                # Custom exceptions
+│   │   └── types/                     # Common TS types
+│   │
+│   ├── utils/                         # Helper functions
+│   │   ├── logger/
+│   │   └── validators/
+│   │
+│   ├── app.module.ts                  # Root module
+│   └── main.ts                        # [Hiện có]
+│
+├── test/                              # Automated tests
+│   ├── e2e/
+│   └── unit/
+│
+└── api-docs/                          # API documentation
+    └── swagger-spec.json

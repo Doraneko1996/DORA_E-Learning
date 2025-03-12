@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
-import DashboardView from '@/views/DashboardView.vue'
-import CRUDLayout from '@/layouts/CRUDLayout.vue'
+import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { useSnackbarStore } from '@/stores/snackbar'
 import AdminView from '@/views/AdminView.vue'
 import HomeView from '@/views/HomeView.vue'
@@ -18,7 +17,7 @@ const router = createRouter({
       path: '/dashboard',
       meta: { requiresAuth: true },
       name: 'dashboard',
-      component: DashboardView,
+      component: DashboardLayout,
       redirect: '/dashboard/home',
       children: [
         {
@@ -38,13 +37,11 @@ const router = createRouter({
         },
         {
           path: 'manage',
-          component: CRUDLayout,
           children: [
             {
               path: 'admin',
               meta: {
                 title: 'Quản trị viên',
-                apiEndpoint: '/api/admin'
               },
               component: AdminView,
             },

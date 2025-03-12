@@ -1,23 +1,25 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Teacher } from './entities/teacher.entity';
-import { AdminsController, UsersController } from './users.controller';
+import { TeacherProfile } from './entities/teacher-profile.entity';
+import { Class } from '@/classes/entities/class.entity';
+import {
+  AdminsController,
+  ManagersController,
+  TeachersController,
+  UsersController,
+} from './users.controller';
 import { UsersService } from './users.service';
-import { SuperAdminSeeder } from '../database/seeders/superadmin.seeder';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, Teacher]),
-  ],
+  imports: [TypeOrmModule.forFeature([User, TeacherProfile, Class])],
   controllers: [
     UsersController,
     AdminsController,
+    ManagersController,
+    TeachersController,
   ],
-  providers: [
-    UsersService,
-    SuperAdminSeeder,
-  ],
+  providers: [UsersService],
   exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

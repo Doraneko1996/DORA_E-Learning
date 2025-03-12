@@ -1,224 +1,209 @@
-/* eslint-disable prettier/prettier */
-import { 
-    HttpException, 
-    HttpStatus, 
-    Injectable, 
-    // UnauthorizedException, 
-    Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { LoginUserDto } from './dto/login-user.dto';
+import { LoginUserDto } from './dtos/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
+import { LoginResponse } from '@/common/dtos/response.dto';
+
+// Định nghĩa interface cho payload của JWT
+interface JwtPayload {
+  id: number;
+  userName: string;
+  role: number;
+}
 
 @Injectable()
 export class AuthService {
-    private readonly logger = new Logger(AuthService.name);
-    constructor(
-        @InjectRepository(User) private userRepository: Repository<User>,
-        private jwtService: JwtService,
-        private configService: ConfigService
-    ) { }
+  private readonly logger = new Logger(AuthService.name);
+  constructor(
+    @InjectRepository(User) private userRepository: Repository<User>,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
 
-    private async generateToken(payload: { id: number; user_name: string }) {
-        // const [access_token, refresh_token] = await Promise.all([
-        const [access_token] = await Promise.all([
-            this.jwtService.signAsync(payload, {
-                secret: this.configService.get<string>('JWT_SECRET'),
-                expiresIn: this.configService.get<string>('JWT_EXPIRES_IN')
-            }),
-            // this.jwtService.signAsync(payload, {
-            //     secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-            //     expiresIn: this.configService.get<string>('JWT_REFRESH_EXP_IN')
-            // })
-        ]);
-
-        // return { access_token, refresh_token };
-        return { access_token };
+  /**
+   * Tạo JWT token dựa trên payload
+   * @param payload - Thông tin người dùng để mã hóa trong token
+   * @returns Object chứa access_token
+   */
+  private async generateToken(
+    payload: JwtPayload,
+  ): Promise<{ access_token: string }> {
+    try {
+      const access_token = await this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+      });
+      return { access_token };
+    } catch (error) {
+      this.logger.error(`Tạo token thất bại: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Lỗi server khi tạo token');
     }
+  }
 
-    async validateToken(token: string): Promise<any> {
-        try {
-            const payload = await this.jwtService.verifyAsync(token, {
-                secret: this.configService.get<string>('JWT_SECRET')
-            });
+  /**
+   * Xử lý đăng nhập người dùng
+   * @param loginUserDto - DTO chứa thông tin đăng nhập
+   * @returns Thông tin token và user (không chứa password)
+   */
+  async login(loginUserDto: LoginUserDto): Promise<LoginResponse> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { userName: loginUserDto.userName },
+        select: [
+          'id',
+          'role',
+          'userName',
+          'firstName',
+          'lastName',
+          'password',
+          'status',
+        ],
+      });
 
-            if (!payload.id) {
-                throw new HttpException(
-                    'Token không hợp lệ: thiếu ID người dùng',
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
+      if (!user) {
+        throw new UnauthorizedException('Tài khoản không tồn tại');
+      }
 
-            const user = await this.userRepository.findOne({
-                where: { id: payload.id }
-            });
+      if (!user.status) {
+        throw new ForbiddenException('Tài khoản đã bị khóa');
+      }
 
-            if (!user) {
-                throw new HttpException(
-                    'Người dùng không tồn tại',
-                    HttpStatus.NOT_FOUND
-                );
-            }
+      const isPasswordValid = await bcrypt.compare(
+        loginUserDto.password,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Mật khẩu không chính xác');
+      }
 
-            const { password, ...result } = user;
-            return result;
+      const token = await this.generateToken({
+        id: user.id,
+        userName: user.userName,
+        role: user.role,
+      });
 
-        } catch (error) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
+      // Loại bỏ password khỏi user trước khi trả về
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = user;
 
-            if (error.name === 'JsonWebTokenError') {
-                throw new HttpException(
-                    'Token không hợp lệ',
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
-
-            if (error.name === 'TokenExpiredError') {
-                throw new HttpException(
-                    'Token đã hết hạn',
-                    HttpStatus.UNAUTHORIZED
-                );
-            }
-
-            this.logger.error(
-                `Lỗi xác thực token: ${error.message}`,
-                error.stack
-            );
-
-            throw new HttpException(
-                'Lỗi xác thực token',
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+      return {
+        data: {
+          access_token: token.access_token,
+          user: userWithoutPassword,
+        },
+        message: 'Đăng nhập thành công',
+      };
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      // Ghi log lỗi nghiêm trọng (ví dụ: lỗi database, lỗi server)
+      this.logger.error(
+        `Lỗi khi đăng nhập cho ${loginUserDto.userName}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Lỗi server khi đăng nhập');
     }
+  }
 
-    async login(loginUserDto: LoginUserDto): Promise<any> {
-        try {
-            const user = await this.userRepository.findOne({
-                where: { user_name: loginUserDto.user_name }
-            });
+  /**
+   * Đổi mật khẩu người dùng
+   * @param userId - ID của người dùng
+   * @param currentPassword - Mật khẩu hiện tại
+   * @param newPassword - Mật khẩu mới
+   */
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        select: ['id', 'password'], // Chỉ lấy các trường cần thiết
+      });
 
-            if (!user) {
-                throw new HttpException("Tài khoản không tồn tại!", HttpStatus.NOT_FOUND);
-            }
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại');
+      }
 
-            if (user.status === 0) {
-                throw new HttpException(
-                    "Tài khoản đã bị vô hiệu hóa! Vui lòng liên hệ quản lý chuyên môn để biết thêm chi tiết.",
-                    HttpStatus.FORBIDDEN
-                );
-            }
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Mật khẩu hiện tại không chính xác');
+      }
 
-            const checkPass = await bcrypt.compare(loginUserDto.password, user.password);
-            if (!checkPass) {
-                throw new HttpException('Mật khẩu không chính xác!', HttpStatus.UNAUTHORIZED);
-            }
-
-            delete user.password;
-
-            const payload = { id: user.id, user_name: user.user_name };
-            const tokens = await this.generateToken(payload);
-
-            return {
-                ...tokens,
-                user,
-                message: 'Đăng nhập thành công!'
-            };
-        } catch (error) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
-            this.logger.error(
-                `Đăng nhập thất bại: ${error.message}`,
-                error.stack
-            );
-            throw new HttpException(
-                'Đã xảy ra lỗi server trong quá trình đăng nhập. Vui lòng liên hệ quản trị viên.',
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      await this.userRepository.update(userId, { password: hashedNewPassword });
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      // Ghi log lỗi nghiêm trọng (ví dụ: lỗi database, lỗi bcrypt)
+      this.logger.error(
+        `Lỗi khi đổi mật khẩu cho userId ${userId}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Lỗi server khi đổi mật khẩu');
     }
+  }
 
-    // async refreshToken(refresh_token: string): Promise<any> {
-    //     try {
-    //         const verify = await this.jwtService.verifyAsync(refresh_token, {
-    //             secret: this.configService.get<string>('JWT_REFRESH_SECRET')
-    //         });
+  // Để sẵn sàng cho việc thêm refresh token sau này
+  /*
+  async refreshToken(refresh_token: string): Promise<any> {
+    try {
+      const verify = await this.jwtService.verifyAsync(refresh_token, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
 
-    //         const user = await this.userRepository.findOneBy({
-    //             user_name: verify.user_name
-    //         });
+      const user = await this.userRepository.findOne({
+        where: { userName: verify.userName },
+        select: ['id', 'userName', 'role', 'status'],
+      });
 
-    //         if (!user || user.status === 0) {
-    //             throw new UnauthorizedException('Token không hợp lệ');
-    //         }
+      if (!user || !user.status) {
+        throw new UnauthorizedException('Token không hợp lệ hoặc tài khoản bị khóa');
+      }
 
-    //         // Tạo token mới với thời hạn dài hơn
-    //         const tokens = await this.generateToken({
-    //             id: verify.id,
-    //             user_name: verify.user_name
-    //         });
+      const tokens = await this.generateToken({
+        id: user.id,
+        userName: user.userName,
+        role: user.role,
+      });
 
-    //         delete user.password;
-
-    //         return {
-    //             ...tokens,
-    //             user,
-    //             message: 'Làm mới token thành công'
-    //         };
-    //     } catch (error) {
-    //         if (error.name === 'TokenExpiredError') {
-    //             throw new UnauthorizedException('Phiên đăng nhập đã hết hạn');
-    //         }
-    //         this.logger.error(
-    //             `Làm mới token thất bại: ${error.message}`,
-    //             error.stack
-    //         );
-    //         throw new UnauthorizedException('Token không hợp lệ');
-    //     }
-    // }
-
-    async changePassword(
-        userId: number,
-        currentPassword: string,
-        newPassword: string
-    ): Promise<void> {
-        try {
-            const user = await this.userRepository.findOne({
-                where: { id: userId }
-            });
-
-            if (!user) {
-                throw new HttpException('Người dùng không tồn tại', HttpStatus.NOT_FOUND);
-            }
-
-            const isPasswordValid = await bcrypt.compare(
-                currentPassword,
-                user.password
-            );
-
-            if (!isPasswordValid) {
-                throw new HttpException('Mật khẩu hiện tại không chính xác', HttpStatus.UNAUTHORIZED);
-            }
-
-            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-            user.password = hashedNewPassword;
-
-            await this.userRepository.save(user);
-        } catch (error) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
-            this.logger.error(
-                `Đổi mật khẩu thất bại: ${error.message}`,
-                error.stack
-            );
-            throw new HttpException('Lỗi khi đổi mật khẩu', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+      return {
+        data: {
+          access_token: tokens.access_token,
+          user,
+        },
+        message: 'Làm mới token thành công',
+      };
+    } catch (error) {
+      this.logger.error(`Làm mới token thất bại: ${error.message}`, error.stack);
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Phiên đăng nhập đã hết hạn');
+      }
+      throw new UnauthorizedException('Token không hợp lệ');
     }
+  }
+  */
 }

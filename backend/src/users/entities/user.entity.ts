@@ -1,59 +1,87 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, TableInheritance } from 'typeorm';
+import { UserRole } from '@/auth/roles/roles.enum';
+import { Class } from '@/classes/entities/class.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
+  OneToOne,
+} from 'typeorm';
+import { TeacherProfile } from './teacher-profile.entity';
 
+// Base User Entity
+@Index('IDX_USER_ROLE', ['role'])
+@Index('IDX_USER_LASTNAME', ['lastName'])
+@Index('IDX_USER_USERNAME', ['userName'])
 @Entity()
-@TableInheritance({ column: { type: "varchar", name: "type" } })
 export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn('identity')
+  id: number;
 
-    @Column()
-    user_name: string;
+  @Column({ unique: true, type: 'varchar', length: 100 })
+  userName: string;
 
-    @Column()
-    password: string;
+  @Column({ type: 'varchar', length: 60 })
+  password: string;
 
-    // 0: Admin; 1: Manager; 2: Teacher; 3: Student
-    @Column()
-    role: number;
+  // 0: Admin; 1: Manager; 2: Teacher; 3: Student
+  @Column({
+    type: 'smallint',
+    default: UserRole.Student,
+  })
+  role: number;
 
-    @Column()
-    first_name: string;
+  @Column({ type: 'varchar', length: 100 })
+  firstName: string;
 
-    @Column()
-    last_name: string;
+  @Column({ type: 'varchar', length: 100 })
+  lastName: string;
 
-    // 0: Nam; 1: Nữ
-    @Column({ nullable: true, default: null })
-    gender: number;
+  // 0: Nam; 1: Nữ
+  @Column({ type: 'smallint', nullable: true, default: null })
+  gender: number;
 
-    @Column()
-    dob: Date;
+  @Column({ nullable: true, default: null })
+  dob: Date;
 
-    @Column({ nullable: true, default: null })
-    phone_number: string;
+  @Column({ type: 'varchar', length: 20, nullable: true, default: null })
+  phoneNumber: string;
 
-    @Column({ nullable: true, default: null })
-    email: string;
+  @Column({ type: 'varchar', length: 254, nullable: true, default: null })
+  email: string;
 
-    @Column({ nullable: true, default: null })
-    refresh_token: string;
+  @Column({ type: 'boolean', default: true })
+  status: boolean;
 
-    // 1: Đang hoạt động; 0: Ngưng hoạt động
-    @Column({ default: 1 })
-    status: number;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @CreateDateColumn()
-    created_at: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @UpdateDateColumn()
-    updated_at: Date;
+  @Column({ type: 'varchar', length: 255, nullable: true, default: null })
+  address: string;
 
-    @Column({ nullable: true, default: null })
-    address: string;
+  @Column({ type: 'varchar', length: 20, nullable: true, default: null })
+  district: string;
 
-    @Column({ nullable: true, default: null })
-    district: string;
+  @Column({ type: 'varchar', length: 20, nullable: true, default: null })
+  province: string;
 
-    @Column({ nullable: true, default: null })
-    province: string;
+  // Quan hệ với Class (dành cho học sinh)
+  @Column({ name: 'class_id', nullable: true })
+  @Index('IDX_USER_CLASS', { where: 'role = 3' }) // Chỉ index cho học sinh
+  classId: number;
+
+  @ManyToOne(() => Class, (_class) => _class.students)
+  @JoinColumn({ name: 'class_id' })
+  class: Class;
+
+  // Quan hệ với TeacherProfile (dành cho giáo viên)
+  @OneToOne(() => TeacherProfile, (teacherProfile) => teacherProfile.user)
+  teacherProfile: TeacherProfile;
 }
