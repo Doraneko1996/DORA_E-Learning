@@ -158,6 +158,7 @@ import { useSessionTimeout } from 'src/composables/useSessionTimeout';
 import AuthService from 'src/services/auth.service';
 import ThemeToggle from 'src/components/ThemeToggle.vue';
 import { useOptionsStore } from 'src/stores/options.store';
+import type { OptionType } from 'src/types/option.type';
 
 // Khai báo Quasar
 const $q = useQuasar();
@@ -237,17 +238,39 @@ const menuPermissions = computed(() => ({
   canAccessTeacher: selectedRoleValue.value <= 2,
 }));
 
-// Khởi tạo role từ sessionStorage
 onMounted(async () => {
+  // Khởi tạo role từ sessionStorage
   const user = getUserSession();
   if (user && typeof user === 'object' && 'role' in user) {
     selectedRole.value = allRoles.find(r => r.value === user.role)?.title;
     userUsername.value = String(user.userName || '');
   }
 
-  const needsFetch = (['GENDER', 'PROVINCE', 'DISTRICT'] as const).filter(type =>
+  // Các option cơ bản luôn cần tải
+  const basicOptions = ['GENDER', 'PROVINCE', 'DISTRICT'] as const;
+  const needsFetch: OptionType[] = basicOptions.filter(type =>
     !optionsStore.cache[type]?.length || !optionsStore.isCacheValid(type)
-  )
+  );
+
+  // Nếu role không phải 'student', thêm các option đặc thù
+  const userRole = user?.role as number;
+  if (typeof userRole === 'number' && userRole !== 3) {
+    const specificOptions = [
+      'GEMS_EMPLOYEE',
+      'EDUCATION_LEVEL',
+      'INFORMATIC_RELATION',
+      'NVSP',
+      'IC3_CERTIFICATE',
+      'ICDL_CERTIFICATE',
+    ] as const;
+    specificOptions.forEach(type => {
+      if (!optionsStore.cache[type]?.length || !optionsStore.isCacheValid(type)) {
+        needsFetch.push(type);
+      }
+    });
+  }
+
+  // Gọi prefetch nếu có option cần tải
   if (needsFetch.length) {
     await optionsStore.prefetchOptions(needsFetch)
   }

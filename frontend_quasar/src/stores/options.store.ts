@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { OptionsService } from 'src/services/options.service'
-import type { OptionItem, OptionType } from 'src/services/options.service'
+import type { OptionItem, OptionType } from 'src/types/option.type'
 import { LocalStorage } from 'quasar'
 
 interface OptionsState {
@@ -28,7 +28,7 @@ export const useOptionsStore = defineStore('options', () => {
       LocalStorage.set('optionsCache', cache.value) // Lưu cache vào localStorage
       return options
     } catch (e) {
-      console.error('Lỗi lưu cache:', e)
+      console.error(`Lỗi lấy tùy chọn ${type}:`, e)
       throw e
     } finally {
       loading.value.delete(type)

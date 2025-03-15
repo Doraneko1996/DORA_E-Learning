@@ -104,7 +104,8 @@ const handleStatusChange = async (item: User, newStatus: boolean) => {
     group: false,
     timeout: 0,
     spinner: true,
-    message: 'Đang xử lý...',
+    message: 'Cập nhật trạng thái',
+    caption: 'Đang xử lý...',
     color: 'grey',
   });
 
@@ -143,7 +144,8 @@ const confirmDeleteAction = async (ids: number[]) => {
     group: false,
     timeout: 0,
     spinner: true,
-    message: 'Đang xử lý...',
+    message: 'Xóa dữ liệu',
+    caption: 'Đang xử lý...',
     color: 'grey',
   });
 
@@ -211,7 +213,8 @@ const confirmResetPassword = async (ids: number[]) => {
     group: false,
     timeout: 0,
     spinner: true,
-    message: 'Đang xử lý...',
+    message: 'Đặt lại mật khẩu',
+    caption: 'Đang xử lý...',
     color: 'grey',
   });
 
@@ -367,32 +370,3 @@ const handleFiltersChanged = () => {
     </DataTable>
   </div>
 </template>
-
-<style>
-.custom-table {
-  max-height: 68vh
-}
-
-.custom-table .q-table__top,
-.custom-table .q-table__bottom,
-.custom-table thead tr:first-child th {
-  background-color: var(--header-bg)
-}
-
-.custom-table thead tr th {
-  position: sticky;
-  z-index: 1
-}
-
-.custom-table thead tr:first-child th {
-  top: 0
-}
-
-.custom-table.q-table--loading thead tr:last-child th {
-  z-index: 0
-}
-
-.custom-table tbody {
-  scroll-margin-top: 48px
-}
-</style>

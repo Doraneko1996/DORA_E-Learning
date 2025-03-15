@@ -21,28 +21,28 @@ export class TeacherProfile {
   user: User;
 
   // 0: Giáo viên trường; 1: Giáo viên GEMS
-  @Column({ type: 'boolean', nullable: true, default: null })
-  gemsEmployee: boolean;
+  @Column({ type: 'smallint', nullable: true, default: null })
+  gemsEmployee: number;
 
   // 0: Trung cấp; 1: Cao đẳng; 2: Đại học; 3: Sau Đại học (Thạc sĩ, Tiến sĩ)
   @Column({ type: 'smallint', nullable: true, default: null })
   educationLevel: number;
 
   // 1: Bằng liên quan đến tin học; 0: Bằng không liên quan đến tin học
-  @Column({ type: 'boolean', nullable: true, default: null })
-  informaticRelation: boolean;
+  @Column({ type: 'smallint', nullable: true, default: null })
+  informaticRelation: number;
 
   // 0: Không có NVSP; 1: Có NVSP Tiểu học; 2: Có NVSP THCS; 3: Có NVSP cả 2 cấp học
   @Column({ type: 'smallint', nullable: true, default: null })
   nvsp: number;
 
   // 1: Có chứng chỉ IC3; 0: Không có chứng chỉ IC3
-  @Column({ type: 'boolean', nullable: true, default: null })
-  ic3Certificate: boolean;
+  @Column({ type: 'smallint', nullable: true, default: null })
+  ic3Certificate: number;
 
   // 1: Có chứng chỉ ICDL; 0: Không có chứng chỉ ICDL
-  @Column({ type: 'boolean', nullable: true, default: null })
-  icdlCertificate: boolean;
+  @Column({ type: 'smallint', nullable: true, default: null })
+  icdlCertificate: number;
 
   // Quan hệ với Class (dành cho giáo viên)
   @ManyToMany(() => Class, (_class) => _class.teachers)

@@ -419,7 +419,7 @@ export class TeachersController {
 
   //#####===== IMPORT TEACHER TỪ EXCEL =====#####//
   @Post('import')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.Admin, UserRole.Manager)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -438,6 +438,11 @@ export class TeachersController {
   @ApiResponse({
     status: 400,
     description: 'Có lỗi trong dữ liệu, file lỗi được trả về.',
+    content: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+        schema: { type: 'string', format: 'binary' },
+      },
+    },
   })
   @ApiResponse({ status: 500, description: 'Lỗi server khi import.' })
   async importTeacher(
@@ -452,6 +457,7 @@ export class TeachersController {
         importedCount: result.importedCount,
       });
     } else {
+      // Chỉ gửi file lỗi, không gửi JSON sau đó
       res.setHeader(
         'Content-Type',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -460,11 +466,8 @@ export class TeachersController {
         'Content-Disposition',
         'attachment; filename=danh_sach_gv_loi.xlsx',
       );
-      res.send(result.errorFileBuffer);
-      return res.status(400).json({
-        message: result.message,
-        errorCount: result.errorCount,
-      });
+      res.status(400).send(result.errorFileBuffer);
+      return; // Đảm bảo không gửi thêm response
     }
   }
 
@@ -500,7 +503,7 @@ export class TeachersController {
       );
       res.setHeader(
         'Content-Disposition',
-        'attachment; filename=teacher-import-template.xlsx',
+        'attachment; filename=danh_sach_GV_mau_import.xlsx',
       );
 
       // Gửi file bằng res.sendFile
@@ -517,6 +520,46 @@ export class TeachersController {
       this.logger.error(`Lỗi tải file mẫu: ${error.message}`, error.stack);
       throw new HttpException(
         error.message || 'Lỗi server khi tải file mẫu',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('export')
+  @Roles(UserRole.Admin, UserRole.Manager)
+  @ApiOperation({ summary: 'Xuất danh sách giáo viên ra file Excel' })
+  @ApiBody({ type: FilterTeacherDto })
+  @ApiResponse({
+    status: 200,
+    description: 'File Excel chứa danh sách giáo viên đã được tải xuống.',
+    content: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+        schema: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiResponse({ status: 500, description: 'Lỗi server khi xuất file.' })
+  async exportTeachers(
+    @Body() filterTeacherDto: FilterTeacherDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const excelBuffer = await this.usersService.exportTeachersToExcel(filterTeacherDto);
+  
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename=danh_sach_giao_vien.xlsx',
+      );
+  
+      res.status(200).send(excelBuffer);
+    } catch (error) {
+      this.logger.error(`Xuất danh sách giáo viên thất bại: ${error.message}`, error.stack);
+      throw new HttpException(
+        error.message || 'Lỗi server khi xuất danh sách giáo viên',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

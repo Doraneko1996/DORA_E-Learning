@@ -137,7 +137,8 @@ const handleStatusChange = async (item: User, newStatus: boolean) => {
     group: false,
     timeout: 0,
     spinner: true,
-    message: 'Đang xử lý...',
+    message: 'Cập nhật trạng thái',
+    caption: 'Đang xử lý...',
     color: 'grey',
   });
 
@@ -176,7 +177,8 @@ const confirmDeleteAction = async (ids: number[]) => {
     group: false,
     timeout: 0,
     spinner: true,
-    message: 'Đang xử lý...',
+    message: 'Xóa dữ liệu',
+    caption: 'Đang xử lý...',
     color: 'grey',
   });
 
@@ -243,7 +245,8 @@ const confirmResetPassword = async (ids: number[]) => {
     group: false,
     timeout: 0,
     spinner: true,
-    message: 'Đang xử lý...',
+    message: 'Đặt lại mật khẩu',
+    caption: 'Đang xử lý...',
     color: 'grey',
   });
 
@@ -380,55 +383,7 @@ const handleFiltersChanged = () => {
       </template>
 
       <!-- Hành động toolbar -->
-      <template v-if="!selectedIds.length && $q.screen.lt.md" #toolbar-view-actions>
-        <q-btn icon="mdi-dots-vertical" flat round>
-          <q-menu>
-            <q-list style="min-width: 180px">
-              <q-item clickable v-close-popup>
-                <q-item-section side>
-                  <q-icon name="mdi-file-download-outline" />
-                </q-item-section>
-                <q-item-section>Tải file mẫu</q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup>
-                <q-item-section side>
-                  <q-icon name="mdi-file-import-outline" />
-                </q-item-section>
-                <q-item-section>Nhập dữ liệu</q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup>
-                <q-item-section side>
-                  <q-icon name="mdi-file-export-outline" />
-                </q-item-section>
-                <q-item-section>Xuất dữ liệu</q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="openCreateModal">
-                <q-item-section side>
-                  <q-icon name="mdi-plus-box-outline" />
-                </q-item-section>
-                <q-item-section>Tạo mới</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
-      </template>
-
-      <template v-else-if="!selectedIds.length && $q.screen.gt.sm" #toolbar-view-actions>
-        <q-btn icon="mdi-file-download-outline" flat round>
-          <q-tooltip>
-            Tải file mẫu
-          </q-tooltip>
-        </q-btn>
-        <q-btn icon="mdi-file-import-outline" flat round>
-          <q-tooltip>
-            Nhập dữ liệu
-          </q-tooltip>
-        </q-btn>
-        <q-btn icon="mdi-file-export-outline" flat round>
-          <q-tooltip>
-            Xuất dữ liệu
-          </q-tooltip>
-        </q-btn>
+      <template v-if="!selectedIds.length" #toolbar-view-actions>
         <q-btn icon="mdi-plus-box-outline" @click="openCreateModal" flat round>
           <q-tooltip>
             Tạo mới
@@ -438,32 +393,3 @@ const handleFiltersChanged = () => {
     </DataTable>
   </div>
 </template>
-
-<style>
-.custom-table {
-  max-height: 76vh
-}
-
-.custom-table .q-table__top,
-.custom-table .q-table__bottom,
-.custom-table thead tr:first-child th {
-  background-color: var(--header-bg)
-}
-
-.custom-table thead tr th {
-  position: sticky;
-  z-index: 1
-}
-
-.custom-table thead tr:first-child th {
-  top: 0
-}
-
-.custom-table.q-table--loading thead tr:last-child th {
-  z-index: 0
-}
-
-.custom-table tbody {
-  scroll-margin-top: 48px
-}
-</style>

@@ -38,6 +38,11 @@ const routes: RouteRecordRaw[] = [
             name: 'Quản lý viên',
             component: () => import('pages/ManagerPage.vue'),
           },
+          {
+            path: 'teacher',
+            name: 'Giáo viên',
+            component: () => import('pages/TeacherPage.vue'),
+          },
         ],
       },
     ],

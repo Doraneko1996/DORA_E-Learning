@@ -221,6 +221,70 @@ defineExpose({
           <slot name="body-cell-gender" :row="props.row"></slot>
         </q-td>
       </template>
+
+      <!-- Slot cho cột đơn vị -->
+      <template v-slot:body-cell-gemsEmployee="props">
+        <q-td class="text-center">
+          <slot name="body-cell-gemsEmployee" :row="props.row"></slot>
+        </q-td>
+      </template>
+
+      <!-- Slot cho cột trình độ -->
+      <template v-slot:body-cell-educationLevel="props">
+        <q-td class="text-center">
+          <slot name="body-cell-educationLevel" :row="props.row"></slot>
+        </q-td>
+      </template>
+
+      <!-- Slot cho cột nghiệp vụ sư phạm -->
+      <template v-slot:body-cell-nvsp="props">
+        <q-td class="text-center">
+          <slot name="body-cell-nvsp" :row="props.row"></slot>
+        </q-td>
+      </template>
+
+      <!-- Slot cho cột ic3Certificate -->
+      <template v-slot:body-cell-ic3Certificate="props">
+        <q-td class="text-center">
+          <slot name="body-cell-ic3Certificate" :row="props.row"></slot>
+        </q-td>
+      </template>
+
+      <!-- Slot cho cột icdlCertificate -->
+      <template v-slot:body-cell-icdlCertificate="props">
+        <q-td class="text-center">
+          <slot name="body-cell-icdlCertificate" :row="props.row"></slot>
+        </q-td>
+      </template>
     </q-table>
   </div>
 </template>
+
+<style>
+.custom-table {
+  max-height: 76vh;
+}
+
+.custom-table .q-table__top,
+.custom-table .q-table__bottom,
+.custom-table thead tr:first-child th {
+  background-color: var(--header-bg);
+}
+
+.custom-table thead tr th {
+  position: sticky;
+  z-index: 1;
+}
+
+.custom-table thead tr:first-child th {
+  top: 0;
+}
+
+.custom-table.q-table--loading thead tr:last-child th {
+  z-index: 0;
+}
+
+.custom-table tbody {
+  scroll-margin-top: 48px;
+}
+</style>

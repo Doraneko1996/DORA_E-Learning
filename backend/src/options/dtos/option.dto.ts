@@ -1,5 +1,5 @@
 export const GENDER_OPTIONS = [null, 0, 1] as const;
-export const PROVINCE_OPTIONS = [null, 'HCM', 'TDUC', 'LA'] as const;
+export const PROVINCE_OPTIONS = [null, 'HCM', 'TDUC', 'BD', 'LA'] as const;
 export const DISTRICT_OPTIONS = [
   null,
   '1',
@@ -26,6 +26,7 @@ export const DISTRICT_OPTIONS = [
   'CCHI',
   'HMON',
   'NBE',
+  'DA',
   'CGIUOC',
   'DHOA',
   'BLUC',

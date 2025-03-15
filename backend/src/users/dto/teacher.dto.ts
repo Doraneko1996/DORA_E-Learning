@@ -20,76 +20,7 @@ import {
 /**
  * DTO cho hồ sơ giáo viên
  */
-export class TeacherProfileDto {}
-
-/**
- * DTO cho lọc giáo viên
- */
-export class FilterTeacherDto extends PartialType(
-  PickType(BaseFilterDto, [
-    'page',
-    'limit',
-    'sortBy',
-    'order',
-    'search',
-    'district',
-  ] as const),
-) {
-  @ApiProperty({
-    description: 'Lọc theo trạng thái nhân viên (0: Trường, 1: GEMS)',
-    example: 1,
-    required: false,
-    enum: GEMS_EMPLOYEE,
-  })
-  @IsOptional()
-  @IsEnum(GEMS_EMPLOYEE)
-  gemsEmployee?: (typeof GEMS_EMPLOYEE)[number];
-
-  @ApiProperty({
-    description: 'Lọc theo trình độ học vấn',
-    example: 2,
-    required: false,
-    enum: EDUCATION_LEVEL_OPTIONS,
-  })
-  @IsOptional()
-  @IsEnum(EDUCATION_LEVEL_OPTIONS)
-  educationLevel?: (typeof EDUCATION_LEVEL_OPTIONS)[number];
-
-  @ApiProperty({
-    description: 'Lọc theo chứng chỉ NVSP',
-    example: 3,
-    required: false,
-    enum: NVSP_OPTIONS,
-  })
-  @IsOptional()
-  @IsEnum(NVSP_OPTIONS)
-  nvsp?: (typeof NVSP_OPTIONS)[number];
-
-  @ApiProperty({
-    description: 'Lọc theo chứng chỉ IC3 (0: Không, 1: Có)',
-    example: 1,
-    required: false,
-    enum: IC3_CERTIFICATE,
-  })
-  @IsOptional()
-  @IsEnum(IC3_CERTIFICATE)
-  ic3Certificate?: (typeof IC3_CERTIFICATE)[number];
-
-  @ApiProperty({
-    description: 'Lọc theo chứng chỉ ICDL (0: Không, 1: Có)',
-    example: 0,
-    required: false,
-    enum: ICDL_CERTIFICATE,
-  })
-  @IsOptional()
-  @IsEnum(ICDL_CERTIFICATE)
-  icdlCertificate?: (typeof ICDL_CERTIFICATE)[number];
-}
-
-/**
- * DTO tạo mới giáo viên
- */
-export class CreateTeacherDto extends BasePersonalInfoDto {
+export class TeacherProfileDto {
   @ApiProperty({
     description: 'Trạng thái nhân viên (0: Trường, 1: GEMS)',
     example: 1,
@@ -149,6 +80,84 @@ export class CreateTeacherDto extends BasePersonalInfoDto {
   @IsOptional()
   @IsEnum(ICDL_CERTIFICATE)
   icdlCertificate?: (typeof ICDL_CERTIFICATE)[number];
+}
+
+/**
+ * DTO cho lọc giáo viên
+ */
+export class FilterTeacherDto extends PartialType(
+  PickType(BaseFilterDto, [
+    'page',
+    'limit',
+    'sortBy',
+    'order',
+    'search',
+    'gender',
+    'district',
+  ] as const),
+) {
+  @ApiProperty({
+    description: 'Lọc theo trạng thái nhân viên (0: Trường, 1: GEMS)',
+    example: 1,
+    required: false,
+    enum: GEMS_EMPLOYEE,
+  })
+  @IsOptional()
+  @IsEnum(GEMS_EMPLOYEE)
+  gemsEmployee?: (typeof GEMS_EMPLOYEE)[number];
+
+  @ApiProperty({
+    description: 'Lọc theo trình độ học vấn',
+    example: 2,
+    required: false,
+    enum: EDUCATION_LEVEL_OPTIONS,
+  })
+  @IsOptional()
+  @IsEnum(EDUCATION_LEVEL_OPTIONS)
+  educationLevel?: (typeof EDUCATION_LEVEL_OPTIONS)[number];
+
+  @ApiProperty({
+    description: 'Lọc theo chứng chỉ NVSP',
+    example: 3,
+    required: false,
+    enum: NVSP_OPTIONS,
+  })
+  @IsOptional()
+  @IsEnum(NVSP_OPTIONS)
+  nvsp?: (typeof NVSP_OPTIONS)[number];
+
+  @ApiProperty({
+    description: 'Lọc theo chứng chỉ IC3 (0: Không, 1: Có)',
+    example: 1,
+    required: false,
+    enum: IC3_CERTIFICATE,
+  })
+  @IsOptional()
+  @IsEnum(IC3_CERTIFICATE)
+  ic3Certificate?: (typeof IC3_CERTIFICATE)[number];
+
+  @ApiProperty({
+    description: 'Lọc theo chứng chỉ ICDL (0: Không, 1: Có)',
+    example: 0,
+    required: false,
+    enum: ICDL_CERTIFICATE,
+  })
+  @IsOptional()
+  @IsEnum(ICDL_CERTIFICATE)
+  icdlCertificate?: (typeof ICDL_CERTIFICATE)[number];
+}
+
+/**
+ * DTO tạo mới giáo viên
+ */
+export class CreateTeacherDto extends BasePersonalInfoDto {
+  @ApiProperty({
+    description: 'Hồ sơ giáo viên',
+    type: TeacherProfileDto,
+    required: false,
+  })
+  @IsOptional()
+  teacherProfile?: TeacherProfileDto;
 
   //   @ApiProperty({
   //     description: 'Danh sách ID các lớp học mà giáo viên dạy',

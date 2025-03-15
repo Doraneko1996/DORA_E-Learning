@@ -1,11 +1,5 @@
 import { api } from 'src/boot/axios'
-
-export type OptionType = 'GENDER' | 'PROVINCE' | 'DISTRICT'
-
-export interface OptionItem {
-  value: string
-  label: string
-}
+import type { OptionItem, OptionType } from 'src/types/option.type'
 
 export const OptionsService = {
   async fetchOptions(type: OptionType): Promise<OptionItem[]> {

@@ -8,6 +8,7 @@ export const provinceLabelMap: Record<string, string> = {
   null: 'Bỏ trống',
   HCM: 'Hồ Chí Minh',
   TDUC: 'Thủ Đức',
+  BD: 'Bình Dương',
   LA: 'Long An',
 };
 
@@ -37,6 +38,7 @@ export const districtLabelMap: Record<string, string> = {
   CCHI: 'Huyện Củ Chi',
   HMON: 'Huyện Hóc Môn',
   NBE: 'Huyện Nhà Bè',
+  DA: 'TP. Dĩ An',
   CGIUOC: 'Huyện Cần Giuộc',
   DHOA: 'Huyện Đức Hòa',
   BLUC: 'Huyện Bến Lức',
@@ -44,8 +46,8 @@ export const districtLabelMap: Record<string, string> = {
 
 export const gemsEmployeeLabelMap: Record<string, string> = {
   null: 'Bỏ trống',
-  0: 'Giáo viên trường',
-  1: 'Giáo viên GEMS',
+  0: 'GV trường',
+  1: 'GV GEMS',
 };
 
 export const educationLevelLabelMap: Record<string, string> = {
@@ -64,10 +66,10 @@ export const informaticRelation: Record<string, string> = {
 
 export const nvspLabelMap: Record<string, string> = {
   null: 'Bỏ trống',
-  0: 'Chưa có NVSP',
-  1: 'Có NVSP Tiểu học',
-  2: 'Có NVSP THCS',
-  3: 'Có NVSP cả 2 cấp học',
+  0: 'Chưa có',
+  1: 'NVSP Tiểu học',
+  2: 'NVSP THCS',
+  3: 'NVSP cả 2 cấp',
 };
 
 export const ic3CertificateLabelMap: Record<string, string> = {

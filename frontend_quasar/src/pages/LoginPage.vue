@@ -100,9 +100,9 @@ const onSubmit = async () => {
 
         <q-card-section class="q-pt-lg q-pb-xs q-px-sm q-gutter-sm">
           <q-input v-model="form.userName" label="Tên tài khoản" outlined :error="v$.userName.$error"
-            :error-message="v$.userName.$errors[0]?.$message?.toString()" />
+            :error-message="v$.userName.$errors[0]?.$message?.toString()" :disable="loading" />
           <q-input v-model="form.password" label="Mật khẩu" outlined :type="visible ? 'text' : 'password'"
-            :error="v$.password.$error" :error-message="v$.password.$errors[0]?.$message?.toString()">
+            :error="v$.password.$error" :error-message="v$.password.$errors[0]?.$message?.toString()" :disable="loading">
             <template v-slot:append>
               <q-icon :name="visible ? 'visibility' : 'visibility_off'" class="cursor-pointer"
                 @click="visible = !visible" />

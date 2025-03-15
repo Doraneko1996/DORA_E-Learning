@@ -32,13 +32,9 @@ import { REDIS_CLIENT } from './redis.constants';
 })
 export class RedisModule implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject(REDIS_CLIENT) private readonly redisClient: Redis) {}
-
-  async onModuleInit() {
-    console.log('RedisModule initialized');
-  }
+  async onModuleInit() {}
 
   async onModuleDestroy() {
     await this.redisClient.quit(); // Đóng kết nối khi module bị hủy
-    console.log('Redis connection closed');
   }
 }

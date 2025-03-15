@@ -11,7 +11,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { TeacherProfile } from './entities/teacher-profile.entity';
-import { DataSource, In, QueryFailedError, Repository } from 'typeorm';
+import {
+  DataSource,
+  DeepPartial,
+  In,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import {
   CreateAdminDto,
   FilterAdminDto,
@@ -28,6 +34,7 @@ import {
   CreateTeacherDto,
   FilterTeacherDto,
   ResetPasswordTeacherDto,
+  TeacherProfileDto,
   UpdateTeacherDto,
 } from './dto/teacher.dto';
 import { ConfigService } from '@nestjs/config';
@@ -35,10 +42,43 @@ import { UserRole } from 'src/auth/roles/roles.enum';
 import * as XLSX from 'xlsx-js-style';
 import * as bcrypt from 'bcryptjs';
 import { PaginationMeta } from '@/common/dtos/response.dto';
+import { capitalize } from '@/utils/capitalize.utils';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+
+  // Bản đồ ánh xạ từ giá trị Excel sang value trong DISTRICT_OPTIONS
+  private readonly districtExcelMap: Record<string, string> = {
+    '1': '1',
+    '2': '2',
+    '3': '3',
+    '4': '4',
+    '5': '5',
+    '6': '6',
+    '7': '7',
+    '8': '8',
+    '9': '9',
+    '10': '10',
+    '11': '11',
+    '12': '12',
+    'Gò Vấp': 'GVAP',
+    'Phú Nhuận': 'PNHUAN',
+    'Thủ Đức': 'TDUC',
+    'Bình Thạnh': 'BTHANH',
+    'Bình Tân': 'BTAN',
+    'Bình Chánh': 'BCHANH',
+    'Tân Bình': 'TBINH',
+    'Tân Phú': 'TPHU',
+    'Nhà Bè': 'NBE',
+    'Hóc Môn': 'HMON',
+    'Củ Chi': 'CCHI',
+    'Cần Giờ': 'CGIO',
+    'Đức Hòa': 'DHOA',
+    'Bến Lức': 'BLUC',
+    'Cần Giuộc': 'CGIUOC',
+  };
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -263,9 +303,7 @@ export class UsersService {
 
   //#####===== THÊM ADMIN =====#####//
   //################################//
-  async addAdmin(
-    createAdminDto: CreateAdminDto,
-  ): Promise<{ data: Omit<User, 'password'>; message: string }> {
+  async addAdmin(createAdminDto: CreateAdminDto): Promise<{ message: string }> {
     const queryRunner =
       this.userRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -286,14 +324,12 @@ export class UsersService {
       });
 
       const savedAdmin = await queryRunner.manager.save(newAdmin);
-      const { password, ...result } = savedAdmin;
       await queryRunner.commitTransaction();
 
       this.logger.log(
         `Quản trị viên ${savedAdmin.userName} đã được tạo thành công`,
       );
       return {
-        data: result,
         message: `Quản trị viên ${savedAdmin.userName} đã được tạo thành công`,
       };
     } catch (error) {
@@ -650,7 +686,7 @@ export class UsersService {
   //##################################//
   async addManager(
     createManagerDto: CreateManagerDto,
-  ): Promise<{ data: Omit<User, 'password'>; message: string }> {
+  ): Promise<{ message: string }> {
     const queryRunner =
       this.userRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -673,14 +709,12 @@ export class UsersService {
       });
 
       const savedManager = await queryRunner.manager.save(newManager);
-      const { password, ...result } = savedManager;
       await queryRunner.commitTransaction();
 
       this.logger.log(
         `Quản lý ${savedManager.userName} đã được tạo thành công`,
       );
       return {
-        data: result,
         message: `Quản lý ${savedManager.userName} đã được tạo thành công`,
       };
     } catch (error) {
@@ -911,12 +945,7 @@ export class UsersService {
           'user.address',
           'user.district',
           'user.province',
-          'teacherProfile.gemsEmployee',
-          'teacherProfile.educationLevel',
-          'teacherProfile.informaticRelation',
-          'teacherProfile.nvsp',
-          'teacherProfile.ic3Certificate',
-          'teacherProfile.icdlCertificate',
+          'teacherProfile',
         ])
         .where('user.role = :role', { role: UserRole.Teacher });
 
@@ -929,15 +958,18 @@ export class UsersService {
         );
       }
 
-      const filterFields = [
-        'district',
+      // Phân biệt trường của user và teacherProfile
+      const userFilterFields = ['gender', 'district'];
+      const profileFilterFields = [
         'gemsEmployee',
         'educationLevel',
         'nvsp',
         'ic3Certificate',
         'icdlCertificate',
       ];
-      filterFields.forEach((field) => {
+
+      // Lọc cho các trường của user
+      userFilterFields.forEach((field) => {
         if (filterTeacherDto[field] !== undefined) {
           if (filterTeacherDto[field] === null) {
             query.andWhere(`user.${field} IS NULL`);
@@ -949,18 +981,39 @@ export class UsersService {
         }
       });
 
+      // Lọc cho các trường của teacherProfile
+      profileFilterFields.forEach((field) => {
+        if (filterTeacherDto[field] !== undefined) {
+          if (filterTeacherDto[field] === null) {
+            query.andWhere(`teacherProfile.${field} IS NULL`);
+          } else {
+            query.andWhere(`teacherProfile.${field} = :${field}`, {
+              [field]: filterTeacherDto[field],
+            });
+          }
+        }
+      });
+
       const orderField = this.validateSortField(filterTeacherDto.sortBy);
       const orderDirection =
         filterTeacherDto.order?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
       query.orderBy(orderField, orderDirection);
 
-      const validatedLimit = Math.min(Math.max(filterTeacherDto.limit, 1), 100);
-      const skip = (filterTeacherDto.page - 1) * validatedLimit;
-
-      const [data, total] = await query
-        .skip(skip)
-        .take(validatedLimit)
-        .getManyAndCount();
+      // Chỉ áp dụng phân trang nếu limit > 0
+      const limit = filterTeacherDto.limit !== undefined ? filterTeacherDto.limit : 50;
+      const validatedLimit = Math.min(Math.max(limit, 0), 500);
+      let data: User[];
+      let total: number;
+      if (validatedLimit > 0) {
+        const skip = (filterTeacherDto.page - 1) * validatedLimit;
+        [data, total] = await query
+          .skip(skip)
+          .take(validatedLimit)
+          .getManyAndCount();
+      } else {
+        // Xuất toàn bộ dữ liệu nếu limit = 0
+        [data, total] = await query.getManyAndCount();
+      }
 
       return {
         data,
@@ -987,7 +1040,7 @@ export class UsersService {
   //##################################//
   async addTeacher(
     createTeacherDto: CreateTeacherDto,
-  ): Promise<{ data: User; message: string }> {
+  ): Promise<{ message: string }> {
     const queryRunner =
       this.userRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -1017,19 +1070,20 @@ export class UsersService {
 
       const teacherProfile = this.teacherProfileRepository.create({
         user: savedTeacher,
-        gemsEmployee: createTeacherDto.gemsEmployee ?? null,
-        educationLevel: createTeacherDto.educationLevel ?? null,
-        informaticRelation: createTeacherDto.informaticRelation ?? null,
-        nvsp: createTeacherDto.nvsp ?? null,
-        ic3Certificate: createTeacherDto.ic3Certificate ?? null,
-        icdlCertificate: createTeacherDto.icdlCertificate ?? null,
+        gemsEmployee: createTeacherDto.teacherProfile?.gemsEmployee ?? null,
+        educationLevel: createTeacherDto.teacherProfile?.educationLevel ?? null,
+        informaticRelation:
+          createTeacherDto.teacherProfile?.informaticRelation ?? null,
+        nvsp: createTeacherDto.teacherProfile?.nvsp ?? null,
+        ic3Certificate: createTeacherDto.teacherProfile?.ic3Certificate ?? null,
+        icdlCertificate:
+          createTeacherDto.teacherProfile?.icdlCertificate ?? null,
       });
 
       await queryRunner.manager.save(teacherProfile);
       await queryRunner.commitTransaction();
 
       return {
-        data: savedTeacher,
         message: `Giáo viên ${savedTeacher.userName} đã được tạo thành công`,
       };
     } catch (error) {
@@ -1060,15 +1114,20 @@ export class UsersService {
     await queryRunner.startTransaction();
 
     try {
+      // Tìm User với khóa FOR UPDATE, không tải quan hệ ngay
       const teacher = await queryRunner.manager.findOne(User, {
         where: { id, role: UserRole.Teacher },
-        relations: ['teacherProfile'],
         lock: { mode: 'pessimistic_write' },
       });
 
       if (!teacher) {
         throw new NotFoundException('Không tìm thấy giáo viên nào');
       }
+
+      // Tải teacherProfile riêng nếu cần
+      const teacherProfile = await queryRunner.manager.findOne(TeacherProfile, {
+        where: { user: { id: teacher.id } },
+      });
 
       const userFields = {
         userName: updateTeacherDto.userName,
@@ -1086,17 +1145,21 @@ export class UsersService {
       Object.assign(teacher, userFields);
       const updatedTeacher = await queryRunner.manager.save(User, teacher);
 
-      if (teacher.teacherProfile) {
-        const profileFields = {
-          gemsEmployee: updateTeacherDto.gemsEmployee ?? null,
-          educationLevel: updateTeacherDto.educationLevel ?? null,
-          informaticRelation: updateTeacherDto.informaticRelation ?? null,
-          nvsp: updateTeacherDto.nvsp ?? null,
-          ic3Certificate: updateTeacherDto.ic3Certificate ?? null,
-          icdlCertificate: updateTeacherDto.icdlCertificate ?? null,
+      if (teacherProfile) {
+        const profileFields: DeepPartial<TeacherProfile> = {
+          gemsEmployee: updateTeacherDto.teacherProfile?.gemsEmployee ?? null,
+          educationLevel:
+            updateTeacherDto.teacherProfile?.educationLevel ?? null,
+          informaticRelation:
+            updateTeacherDto.teacherProfile?.informaticRelation ?? null,
+          nvsp: updateTeacherDto.teacherProfile?.nvsp ?? null,
+          ic3Certificate:
+            updateTeacherDto.teacherProfile?.ic3Certificate ?? null,
+          icdlCertificate:
+            updateTeacherDto.teacherProfile?.icdlCertificate ?? null,
         };
-        Object.assign(teacher.teacherProfile, profileFields);
-        await queryRunner.manager.save(TeacherProfile, teacher.teacherProfile);
+        Object.assign(teacherProfile, profileFields);
+        await queryRunner.manager.save(TeacherProfile, teacherProfile);
       }
 
       await queryRunner.commitTransaction();
@@ -1139,9 +1202,9 @@ export class UsersService {
     await queryRunner.startTransaction();
 
     try {
+      // Truy vấn bảng user với khóa pessimistic_write
       const teachers = await queryRunner.manager.find(User, {
         where: { id: In(ids), role: UserRole.Teacher },
-        relations: ['teacherProfile'],
         lock: { mode: 'pessimistic_write' },
       });
 
@@ -1149,13 +1212,17 @@ export class UsersService {
         throw new NotFoundException('Không tìm thấy giáo viên nào');
       }
 
-      const teacherProfiles = teachers
-        .map((teacher) => teacher.teacherProfile)
-        .filter(Boolean);
+      // Truy vấn teacherProfile riêng nếu cần
+      const teacherProfiles = await queryRunner.manager.find(TeacherProfile, {
+        where: { user: In(ids) },
+      });
+
+      // Xóa teacherProfile trước (nếu có)
       if (teacherProfiles.length > 0) {
         await queryRunner.manager.remove(TeacherProfile, teacherProfiles);
       }
 
+      // Xóa user
       await queryRunner.manager.remove(User, teachers);
       await queryRunner.commitTransaction();
 
@@ -1320,8 +1387,8 @@ export class UsersService {
     try {
       for (let i = 1; i < data.length; i++) {
         const item = data[i];
-        if (!item || item.length < 15) {
-          this.logger.warn(`Dòng ${i + 1} không đầy đủ dữ liệu, bỏ qua`);
+        if (!item) {
+          this.logger.warn(`Dòng ${i + 1} không có dữ liệu, bỏ qua`);
           continue;
         }
 
@@ -1371,16 +1438,35 @@ export class UsersService {
         await queryRunner.rollbackTransaction();
         this.logger.warn(`Import thất bại với ${errorCells.length} lỗi`);
 
-        // Tô đỏ ô lỗi với xlsx-js-style
-        errorCells.forEach(({ row, col }) => {
-          const cellAddress = XLSX.utils.encode_cell({ r: row - 1, c: col });
-          if (!worksheet[cellAddress]) {
-            worksheet[cellAddress] = { t: 's', v: '' }; // Khởi tạo ô nếu chưa có
+        // Tô đỏ ô lỗi và thêm ghi chú vào cột 15
+        errorCells.forEach(({ row, col, error }) => {
+          const errorCellAddress = XLSX.utils.encode_cell({
+            r: row - 1,
+            c: col,
+          });
+          const noteCellAddress = XLSX.utils.encode_cell({ r: row - 1, c: 15 }); // Cột 15
+
+          // Tô đỏ ô lỗi
+          if (!worksheet[errorCellAddress]) {
+            worksheet[errorCellAddress] = { t: 's', v: '' };
           }
-          worksheet[cellAddress].s = {
+          worksheet[errorCellAddress].s = {
             fill: {
-              patternType: 'solid', // Định dạng màu nền
+              patternType: 'solid',
               fgColor: { rgb: 'FF7474' }, // Màu đỏ nhạt
+            },
+          };
+
+          // Thêm ghi chú lỗi vào cột 15
+          if (!worksheet[noteCellAddress]) {
+            worksheet[noteCellAddress] = { t: 's', v: error };
+          } else {
+            worksheet[noteCellAddress].v = error; // Ghi đè nếu đã có dữ liệu
+          }
+          worksheet[noteCellAddress].s = {
+            fill: {
+              patternType: 'solid',
+              fgColor: { rgb: 'FFFF99' }, // Màu vàng nhạt cho ghi chú
             },
           };
         });
@@ -1414,28 +1500,40 @@ export class UsersService {
     item: Array<string | number>,
     rowIndex: number,
   ): Promise<{ user: User; profile: TeacherProfile }> {
-    // Xử lý tên tài khoản
-    let userName = (item[0] as string)?.trim(); // Cột 0: Tên tài khoản
-    const fullName = (item[1] as string)?.trim(); // Cột 1: Họ và Tên
+    // Xử lý tên tài khoản (cột 0 - không bắt buộc)
+    let userName = (item[0] as string)?.trim() || null;
 
-    // Validate trường bắt buộc: Họ và Tên
+    // Cột bắt buộc: Họ và Tên (cột 1)
+    const fullName = (item[1] as string)?.trim();
     if (!fullName) {
       throw new BadRequestException(
         `Họ và Tên (dòng ${rowIndex}) không được để trống`,
       );
     }
 
-    const dobRaw = item[2] as string; // Cột 2: Ngày sinh
+    // Cột bắt buộc: Ngày tháng năm sinh (cột 2)
+    const dobRaw = (item[2] as string)?.trim();
     if (!dobRaw || !/^\d{2}\/\d{2}\/\d{4}$/.test(dobRaw)) {
       throw new BadRequestException(
         `Ngày sinh (dòng ${rowIndex}) phải có định dạng DD/MM/YYYY`,
       );
     }
 
-    const gender = Number(item[4]); // Cột 4: Giới tính
-    if (isNaN(gender) || ![0, 1].includes(gender)) {
+    // Cột bắt buộc: GV GEMS? (cột 3)
+    const gemsEmployeeRaw = item[3];
+    if (
+      gemsEmployeeRaw === undefined ||
+      gemsEmployeeRaw === '' ||
+      isNaN(Number(gemsEmployeeRaw))
+    ) {
       throw new BadRequestException(
-        `Giới tính (dòng ${rowIndex}) phải là 0 (Nam) hoặc 1 (Nữ)`,
+        `GV GEMS (dòng ${rowIndex}) không được để trống và phải là 0 hoặc 1`,
+      );
+    }
+    const gemsEmployee = Number(gemsEmployeeRaw);
+    if (![0, 1].includes(gemsEmployee)) {
+      throw new BadRequestException(
+        `GV GEMS (dòng ${rowIndex}) phải là 0 hoặc 1`,
       );
     }
 
@@ -1447,63 +1545,130 @@ export class UsersService {
     // Kiểm tra trùng userName
     await this.checkUserExists(userName);
 
-    // Ánh xạ dữ liệu
-    const nameParts = fullName.split(' ');
-    const firstName = nameParts.pop() || '';
-    const lastName = nameParts.join(' ');
+    // Các cột không bắt buộc
+    const genderRaw = item[4] as string; // Cột 4: Giới tính
+    const gender =
+      genderRaw !== undefined && genderRaw !== '' ? Number(genderRaw) : null;
 
+    const rawEmail = (item[5] as string)?.trim(); // Cột 5: Email
+    const email = rawEmail ? rawEmail.toLowerCase().replace(/\s+/g, '') : null;
+
+    const phoneNumber = (item[6] as string)?.trim() || null; // Cột 6: Số điện thoại
+    const address = (item[7] as string)?.trim() || null; // Cột 7: Địa chỉ
+
+    const districtLabel = (item[8] as string)?.trim(); // Cột 8: Quận/Huyện
+    let districtValue: string | null = null;
+    if (districtLabel) {
+      districtValue = this.districtExcelMap[districtLabel];
+      if (!districtValue) {
+        throw new BadRequestException(
+          `Quận/Huyện (dòng ${rowIndex}) không hợp lệ: ${districtLabel}`,
+        );
+      }
+    }
+
+    const province = (item[9] as string)?.trim() || null; // Cột 9: Thành Phố
+
+    const educationLevelRaw = item[10]; // Cột 10: Trình độ học vấn
+    const educationLevel =
+      educationLevelRaw !== undefined && educationLevelRaw !== ''
+        ? Number(educationLevelRaw)
+        : null;
+
+    const informaticRelationRaw = item[11]; // Cột 11: Ngành tin học
+    const informaticRelation =
+      informaticRelationRaw !== undefined && informaticRelationRaw !== ''
+        ? Number(informaticRelationRaw)
+        : null;
+
+    const nvspRaw = item[12]; // Cột 12: Chứng chỉ NVSP
+    const nvsp =
+      nvspRaw !== undefined && nvspRaw !== '' ? Number(nvspRaw) : null;
+
+    const ic3CertificateRaw = item[13]; // Cột 13: Chứng chỉ IC3
+    const ic3Certificate =
+      ic3CertificateRaw !== undefined && ic3CertificateRaw !== ''
+        ? Number(ic3CertificateRaw)
+        : null;
+
+    const icdlCertificateRaw = item[14]; // Cột 14: ICDL
+    const icdlCertificate =
+      icdlCertificateRaw !== undefined && icdlCertificateRaw !== ''
+        ? Number(icdlCertificateRaw)
+        : null;
+
+    // Chuẩn hóa tên
+    const nameParts = fullName.split(' ').filter(Boolean);
+    const lastName = capitalize(nameParts.pop() || '');
+    const firstName = capitalize(nameParts.length ? nameParts.join(' ') : '');
+    const defaultPassword = `${userName}@`;
+
+    // Tạo entity User
     const user = this.userRepository.create({
       userName,
-      password: await this.hashPassword('123456'),
+      password: await this.hashPassword(defaultPassword),
       role: UserRole.Teacher,
       firstName,
       lastName,
       dob: new Date(dobRaw.split('/').reverse().join('-')),
       gender,
-      email: (item[5] as string)?.trim() || null, // Cột 5: Email
-      phoneNumber: (item[6] as string)?.trim() || null, // Cột 6: Số điện thoại
-      address: (item[7] as string)?.trim() || null, // Cột 7: Địa chỉ
-      district: (item[8] as string)?.trim() || null, // Cột 8: Quận/Huyện
-      province: (item[9] as string)?.trim() || null, // Cột 9: Thành Phố
+      email,
+      phoneNumber,
+      address,
+      district: districtValue,
+      province,
     });
 
+    // Tạo entity TeacherProfile
     const profile = this.teacherProfileRepository.create({
       user,
-      gemsEmployee: Boolean(Number(item[3])) || null, // Cột 3: GV GEMS?
-      educationLevel: Number(item[10]) || null, // Cột 10: Trình độ học vấn
-      informaticRelation: Boolean(Number(item[11])) || null, // Cột 11: Ngành tin học
-      nvsp: Number(item[12]) || null, // Cột 12: Chứng chỉ NVSP
-      ic3Certificate: Boolean(Number(item[13])) || null, // Cột 13: Chứng chỉ IC3
-      icdlCertificate: Boolean(Number(item[14])) || null, // Cột 14: ICDL
+      gemsEmployee,
+      educationLevel,
+      informaticRelation,
+      nvsp,
+      ic3Certificate,
+      icdlCertificate,
     });
 
-    // Validate các trường số
-    if (![0, 1].includes(Number(item[3]))) {
+    // Validate các cột không bắt buộc (nếu có dữ liệu)
+    if (gender !== null && (isNaN(gender) || ![0, 1].includes(gender))) {
       throw new BadRequestException(
-        `GV GEMS (dòng ${rowIndex}) phải là 0 hoặc 1`,
+        `Giới tính (dòng ${rowIndex}) phải là 0 (Nam) hoặc 1 (Nữ)`,
       );
     }
-    if (![0, 1, 2, 3].includes(Number(item[10]))) {
+    if (
+      educationLevel !== null &&
+      (isNaN(educationLevel) || ![0, 1, 2, 3].includes(educationLevel))
+    ) {
       throw new BadRequestException(
         `Trình độ học vấn (dòng ${rowIndex}) phải từ 0-3`,
       );
     }
-    if (![0, 1].includes(Number(item[11]))) {
+    if (
+      informaticRelation !== null &&
+      ![0, 1].includes(Number(informaticRelationRaw))
+    ) {
       throw new BadRequestException(
         `Ngành tin học (dòng ${rowIndex}) phải là 0 hoặc 1`,
       );
     }
-    if (![0, 1, 2, 3].includes(Number(item[12]))) {
+    if (nvsp !== null && (isNaN(nvsp) || ![0, 1, 2, 3].includes(nvsp))) {
       throw new BadRequestException(
         `Chứng chỉ NVSP (dòng ${rowIndex}) phải từ 0-3`,
       );
     }
-    if (![0, 1].includes(Number(item[13]))) {
+    if (
+      ic3Certificate !== null &&
+      ![0, 1].includes(Number(ic3CertificateRaw))
+    ) {
       throw new BadRequestException(
         `Chứng chỉ IC3 (dòng ${rowIndex}) phải là 0 hoặc 1`,
       );
     }
-    if (![0, 1].includes(Number(item[14]))) {
+    if (
+      icdlCertificate !== null &&
+      ![0, 1].includes(Number(icdlCertificateRaw))
+    ) {
       throw new BadRequestException(
         `Chứng chỉ ICDL (dòng ${rowIndex}) phải là 0 hoặc 1`,
       );
@@ -1515,10 +1680,11 @@ export class UsersService {
   //#####===== XÁC ĐỊNH CỘT LỖI =====#####//
   private determineErrorColumn(errorMessage: string): number {
     const errorMap = {
-      'Họ và Tên': 0,
-      'Ngày sinh': 1,
-      'GV GEMS': 2,
-      'Giới tính': 3,
+      'Tên người dùng': 0,
+      'Họ và Tên': 1,
+      'Ngày sinh': 2,
+      'GV GEMS': 3,
+      'Giới tính': 4,
       Email: 5,
       'Số điện thoại': 6,
       'Địa chỉ': 7,
@@ -1529,7 +1695,6 @@ export class UsersService {
       'Chứng chỉ NVSP': 12,
       'Chứng chỉ IC3': 13,
       ICDL: 14,
-      'Tên người dùng đã tồn tại': 0,
     };
 
     for (const [key, value] of Object.entries(errorMap)) {
@@ -1548,9 +1713,14 @@ export class UsersService {
     const dobParts = dob.split('/');
     const baseUsername = `${fullName}${dobParts[0]}${dobParts[1]}`
       .toLowerCase()
-      .replace(/\s+/g, '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+      .replace(/\s+/g, '') // Loại bỏ khoảng trắng
+      .normalize('NFD') // Phân tách ký tự có dấu
+      .replace(/[\u0300-\u036f]/g, '') // Loại bỏ dấu thanh
+      .replace(/[đ]/g, 'd') // Thay 'đ' bằng 'd'
+      .replace(/[ăâ]/g, 'a') // Thay 'ă', 'â' bằng 'a'
+      .replace(/[ê]/g, 'e') // Thay 'ê' bằng 'e'
+      .replace(/[ôơ]/g, 'o') // Thay 'ô', 'ơ' bằng 'o'
+      .replace(/[ư]/g, 'u'); // Thay 'ư' bằng 'u'
 
     let username = baseUsername;
     let counter = 1;
@@ -1563,6 +1733,139 @@ export class UsersService {
     }
 
     return username;
+  }
+
+  async exportTeachersToExcel(
+    filterTeacherDto: FilterTeacherDto,
+  ): Promise<Buffer> {
+    try {
+      // Lấy danh sách giáo viên từ database
+      // Ghi đè limit để xuất toàn bộ dữ liệu
+      const exportFilter = { ...filterTeacherDto, limit: 0 };
+      const { data: teachers } = await this.findAllTeacher(exportFilter);
+
+      // Định nghĩa header cho file Excel
+      const headers = [
+        'Tên tài khoản',
+        'Họ & chữ đệm',
+        'Tên',
+        'Giới tính',
+        'Ngày sinh',
+        'Số điện thoại',
+        'Email',
+        'Địa chỉ',
+        'Quận/Huyện',
+        'Tỉnh/Thành phố',
+        'Đơn vị',
+        'Trình độ học vấn',
+        'Ngành tin học',
+        'C/chỉ NVSP',
+        'C/chỉ IC3',
+        'C/chỉ ICDL',
+        'Ngày tạo',
+      ];
+
+      // Hàm hỗ trợ định dạng ngày thành DD/MM/YYYY
+      const formatDate = (date: Date | null): string => {
+        if (!date) return '';
+        const day = String(date.getDate()).padStart(2, '0'); // Đảm bảo 2 chữ số
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() từ 0-11 nên +1
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
+      // Chuyển đổi dữ liệu giáo viên thành mảng 2D cho Excel
+      const excelData = teachers.map((teacher) => {
+        const profile = (teacher.teacherProfile as TeacherProfileDto) || {};
+        return [
+          teacher.userName || '',
+          teacher.firstName || '',
+          teacher.lastName || '',
+          teacher.gender === 0 ? 'Nam' : teacher.gender === 1 ? 'Nữ' : '',
+          formatDate(teacher.dob),
+          teacher.phoneNumber || '',
+          teacher.email || '',
+          teacher.address || '',
+          teacher.district || '',
+          teacher.province || '',
+          profile.gemsEmployee === 1 ? 'GEMS' : 'Trường',
+          profile.educationLevel !== null
+            ? ['Trung cấp', 'Cao đẳng', 'Đại học', 'Sau đại học'][
+                profile.educationLevel
+              ] || ''
+            : '',
+          profile.informaticRelation === 1
+            ? 'Có'
+            : profile.informaticRelation === 0
+              ? 'Không'
+              : '',
+          profile.nvsp !== null
+            ? ['Chưa có', 'Tiểu học', 'THCS', 'Cả 2 cấp'][profile.nvsp] || ''
+            : '',
+          profile.ic3Certificate === 1
+            ? 'Đã có'
+            : profile.ic3Certificate === 0
+              ? 'Chưa có'
+              : '',
+          profile.icdlCertificate === 1
+            ? 'Đã có'
+            : profile.icdlCertificate === 0
+              ? 'Chưa có'
+              : '',
+          formatDate(teacher.createdAt),
+        ];
+      });
+
+      // Thêm header vào dữ liệu
+      const worksheetData = [headers, ...excelData];
+
+      // Tạo worksheet
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+      // Định dạng header: in đậm, màu nền xanh nhạt
+      const headerRange = XLSX.utils.decode_range('A1:Q1');
+      for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!worksheet[cellAddress]) continue;
+        worksheet[cellAddress].s = {
+          font: { bold: true },
+          fill: { patternType: 'solid', fgColor: { rgb: 'CCE5FF' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+        };
+      }
+
+      // Tự động điều chỉnh độ rộng cột
+      const colWidths = headers.map((header, i) => ({
+        wch: Math.max(
+          header.length,
+          ...excelData.map((row) => row[i]?.toString().length || 0),
+        ),
+      }));
+      worksheet['!cols'] = colWidths;
+
+      // Tạo workbook và thêm worksheet
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách giáo viên');
+
+      // Xuất file Excel dưới dạng Buffer
+      const excelBuffer = XLSX.write(workbook, {
+        type: 'buffer',
+        bookType: 'xlsx',
+      });
+
+      this.logger.log(
+        `Xuất danh sách ${teachers.length} giáo viên ra Excel thành công`,
+      );
+      return excelBuffer; // Trả về cả buffer và filename
+    } catch (error) {
+      this.logger.error(
+        `Xuất danh sách giáo viên thất bại: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Lỗi server khi xuất danh sách giáo viên',
+      );
+    }
   }
 
   //#########################################################//

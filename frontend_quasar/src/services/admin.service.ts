@@ -3,7 +3,7 @@ import type { User } from 'src/types/user.type'
 
 class AdminService {
   // Lấy danh sách admin
-  async getList(filters?: never) {
+  async getList(filters?: Record<string, any>) { // eslint-disable-line @typescript-eslint/no-explicit-any
     const response = await api.get('/admins/list', { params: filters })
     return response.data
   }

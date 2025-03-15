@@ -82,7 +82,7 @@ export class BaseFilterDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(10)
+  @Min(0)
   @Max(500)
   limit?: number = 50;
 
